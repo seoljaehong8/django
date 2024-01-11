@@ -1,0 +1,67 @@
+ECR_ID=188473573518
+aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 188473573518.dkr.ecr.ap-northeast-2.amazonaws.com
+
+echo "docker image build start"
+cd mypjt
+
+IMAGE_NAME="django"
+sudo docker build -t ${IMAGE_NAME} .
+docker tag ${IMAGE_NAME}:latest 188473573518.dkr.ecr.ap-northeast-2.amazonaws.com/${IMAGE_NAME}:latest
+docker push 188473573518.dkr.ecr.ap-northeast-2.amazonaws.com/${IMAGE_NAME}:latest
+
+
+#이미지 빌드시 이름을 ECR 쪽으로 변경
+app = docker.build("188473573518.dkr.ecr.ap-northeast-2.amazonaws.com/django")
+
+# ECR에서 생성한 Repository URI로 변경 및 Jenkins AWS Credential으로 변경
+docker.withRegistry('https://188473573518.dkr.ecr.ap-northeast-2.amazonaws.com')
+
+# Full Code
+  
+node {
+     stage('Clone repository') {
+         checkout scm
+     }
+
+     stage('Build image') {
+         app = docker.build("188473573518.dkr.ecr.ap-northeast-2.amazonaws.com/django")
+     }
+
+     stage('Push image') {
+         sh 'rm  ~/.dockercfg || true'
+         sh 'rm ~/.docker/config.json || true'
+         
+         docker.withRegistry('https://********.dkr.ecr.ap-northeast-2.amazonaws.com') {
+             app.push("${env.BUILD_NUMBER}")
+             app.push("latest")
+     }
+  }
+}
+
+docker.withRegistry("https://188473573518.dkr.ecr.ap-northeast-2.amazonaws.com") {
+                            def image = docker.build("188473573518.dkr.ecr.ap-northeast-2.amazonaws.com/django:3")
+                            image.push()
+                            }
+
+
+pipeline {
+    agent any
+    echo 'hello world1'
+    environment {
+        ECR_PATH = '{YOUR-ACCOUNT-NUMBER}.dkr.ecr.ap-northeast-2.amazonaws.com'
+        ECR_IMAGE = 'demo-maven-springboot'
+        REGION = 'ap-northeast-2'
+        ACCOUNT_ID='{YOUR-ACCOUNT-NUMBER}'
+    }
+
+    stages {
+        stage('Docker Build and Push to ECR'){
+            echo 'hello world2'
+            docker.withRegistry("https://188473573518.dkr.ecr.ap-northeast-2.amazonaws.com") {
+                def image = docker.build("188473573518.dkr.ecr.ap-northeast-2.amazonaws.com/django:3")
+                image.push()
+            }
+            echo 'hello world3'
+        }
+    }
+}

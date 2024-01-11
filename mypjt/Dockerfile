@@ -1,11 +1,11 @@
 # ./Dockerfile 
 FROM python:3
 
-## Install packages
-RUN pip install -r requirements.txt
-
 ## Copy all src files
 COPY . .
+
+## Install packages
+RUN pip install -r requirements.txt
 
 ## Run the application on the port 8080
 EXPOSE 8080
